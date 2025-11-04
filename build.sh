@@ -5,15 +5,22 @@
 pip install -r requirements-deploy.txt
 
 #!/usr/bin/env bash
-# Build script for Render
+# Build script for Render deployment
 
-# Install dependencies
+echo "🔧 Installing dependencies..."
 pip install -r requirements-deploy.txt
 
-# Always retrain model to ensure compatibility
-echo "🔄 Training model with current environment..."
-python train-script.py
+echo "🔄 Training model with production environment..."
+python train-simple.py
 
 echo "✅ Build completed successfully"
+echo "📋 Verifying model file..."
+if [ -f "model.joblib" ]; then
+    echo "✅ Model file exists"
+    ls -la model.joblib
+else
+    echo "❌ Model file not found!"
+    exit 1
+fi
 
 echo "Build completed successfully!"
