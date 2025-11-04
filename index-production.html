@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robo-Advisor Pre-Screening Tool</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 800px; 
+            margin: 0 auto; 
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .step { display: none; }
+        .step.active { display: block; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select, textarea { 
+            width: 100%; 
+            padding: 10px; 
+            border: 1px solid #ddd; 
+            border-radius: 5px; 
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button { 
+            background: #007bff; 
+            color: white; 
+            padding: 12px 24px; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .progress-bar { 
+            width: 100%; 
+            height: 10px; 
+            background: #e0e0e0; 
+            border-radius: 5px; 
+            margin-bottom: 20px;
+        }
+        .progress-fill { 
+            height: 100%; 
+            background: #007bff; 
+            border-radius: 5px; 
+            transition: width 0.3s;
+        }
+        .question { 
+            margin-bottom: 25px; 
+            padding: 20px; 
+            border: 1px solid #e0e0e0; 
+            border-radius: 5px;
+        }
+        .question h3 { margin-top: 0; color: #333; }
+        .option { 
+            margin: 10px 0; 
+            padding: 15px; 
+            border: 2px solid #ddd; 
+            border-radius: 5px; 
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .option:hover { background: #f0f0f0; border-color: #007bff; }
+        .option.selected { background: #007bff; color: white; border-color: #0056b3; }
+        .result-section { 
+            margin: 20px 0; 
+            padding: 20px; 
+            border-radius: 5px;
+        }
+        .recommendation { background: #d4edda; border: 1px solid #c3e6cb; }
+        .portfolio { background: #f8f9fa; border: 1px solid #dee2e6; }
+        .allocation-bar { 
+            display: flex; 
+            height: 30px; 
+            border-radius: 5px; 
+            overflow: hidden; 
+            margin: 10px 0;
+        }
+        .stocks { background: #28a745; }
+        .bonds { background: #ffc107; }
+        .cash { background: #6c757d; }
+        .error { color: #dc3545; background: #f8d7da; padding: 10px; border-radius: 5px; margin: 10px 0; }
+        .success { color: #155724; background: #d4edda; padding: 10px; border-radius: 5px; margin: 10px 0; }
+        .step-indicator {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 AI-Powered Investment Advisory</h1>
+        <p>Get personalized investment recommendations in just 5 minutes</p>
+        
+        <div class="step-indicator" id="stepIndicator">Step 1 of 4</div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        
+        <!-- Step 1: Demographics -->
+        <div class="step active" id="step1">
+            <h2>Step 1: Tell us about yourself</h2>
+            <form id="demographicsForm">
+                <div class="form-group">
+                    <label for="age">Age</label>
+                    <input type="number" id="age" name="age" min="18" max="100" required>
+                </div>
+                <div class="form-group">
+                    <label for="income">Annual Income ($)</label>
+                    <input type="number" id="income" name="income" min="20000" max="50000000" required>
+                    <small style="color: #666;">Maximum: $50 million annually</small>
+                </div>
+                <div class="form-group">
+                    <label for="employmentStatus">Employment Status</label>
+                    <select id="employmentStatus" name="employment_status" required>
+                        <option value="">Select...</option>
+                        <option value="employed">Employed</option>
+                        <option value="self_employed">Self-Employed</option>
+                        <option value="unemployed">Unemployed</option>
+                        <option value="retired">Retired</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="location">Location</label>
+                    <input type="text" id="location" name="location" required>
+                </div>
+                <div class="form-group">
+                    <label for="dependents">Number of Dependents</label>
+                    <input type="number" id="dependents" name="dependents" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="maritalStatus">Marital Status</label>
+                    <select id="maritalStatus" name="marital_status" required>
+                        <option value="">Select...</option>
+                        <option value="single">Single</option>
+                        <option value="married">Married</option>
+                        <option value="divorced">Divorced</option>
+                        <option value="widowed">Widowed</option>
+                    </select>
+                </div>
+                <button type="button" onclick="nextStep()">Next →</button>
+            </form>
+        </div>
+
+        <!-- Step 2: Financial Goals -->
+        <div class="step" id="step2">
+            <h2>Step 2: Your Financial Goals</h2>
+            <form id="financialGoalsForm">
+                <div class="form-group">
+                    <label for="primaryGoal">Primary Investment Goal</label>
+                    <select id="primaryGoal" name="primary_goal" required>
+                        <option value="">Select...</option>
+                        <option value="retirement">Retirement Planning</option>
+                        <option value="home_purchase">Home Purchase</option>
+                        <option value="education">Education Fund</option>
+                        <option value="wealth_building">Wealth Building</option>
+                        <option value="emergency_fund">Emergency Fund</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="targetAmount">Target Amount ($)</label>
+                    <input type="number" id="targetAmount" name="target_amount" min="1000" max="100000000" step="1000">
+                    <small style="color: #666;">Optional. Maximum: $100 million</small>
+                </div>
+                <div class="form-group">
+                    <label for="timeHorizon">Time Horizon (years)</label>
+                    <input type="number" id="timeHorizon" name="time_horizon" min="1" max="50" required>
+                </div>
+                <div class="form-group">
+                    <label for="currentSavings">Current Savings ($)</label>
+                    <input type="number" id="currentSavings" name="current_savings" min="0" max="50000000" required>
+                    <small style="color: #666;">Maximum: $50 million</small>
+                </div>
+                <div class="form-group">
+                    <label for="monthlyExpenses">Monthly Expenses ($)</label>
+                    <input type="number" id="monthlyExpenses" name="monthly_expenses" min="0" max="1000000" required>
+                    <small style="color: #666;">Maximum: $1 million per month</small>
+                </div>
+                <div class="form-group">
+                    <label for="existingDebt">Existing Debt ($)</label>
+                    <input type="number" id="existingDebt" name="existing_debt" min="0" max="50000000" required>
+                    <small style="color: #666;">Maximum: $50 million</small>
+                </div>
+                <div class="form-group">
+                    <label for="emergencyFundMonths">Emergency Fund (months of expenses)</label>
+                    <input type="number" id="emergencyFundMonths" name="emergency_fund_months" min="0" max="12" required>
+                </div>
+                <button type="button" onclick="prevStep()">← Previous</button>
+                <button type="button" onclick="nextStep()">Next →</button>
+            </form>
+        </div>
+
+        <!-- Step 3: Risk Assessment -->
+        <div class="step" id="step3">
+            <h2>Step 3: Risk Assessment</h2>
+            <div id="riskQuestions"></div>
+            <button type="button" onclick="prevStep()">← Previous</button>
+            <button type="button" onclick="submitAssessment()" id="submitBtn" disabled>Submit Assessment</button>
+        </div>
+
+        <!-- Step 4: Results -->
+        <div class="step" id="step4">
+            <h2>🎯 Your Personalized Investment Strategy</h2>
+            <div id="results"></div>
+            <button type="button" onclick="startOver()">Start New Assessment</button>
+        </div>
+        
+        <div id="errorMessage" class="error" style="display: none;"></div>
+        <div id="loadingMessage" class="success" style="display: none;">Processing your assessment...</div>
+    </div>
+
+    <script>
+        // Configuration for different environments
+        const API_BASE_URL = window.location.hostname === 'localhost' 
+            ? 'http://localhost:8000' 
+            : `${window.location.protocol}//${window.location.hostname.replace('robo-advisor-frontend', 'robo-advisor-api')}`; // Update this with your actual API URL
+            
+        let currentStep = 1;
+        let sessionId = null;
+        let riskQuestions = [];
+        let riskResponses = [];
+
+        // Initialize assessment
+        async function initAssessment() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/start-assessment`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                sessionId = data.session_id;
+                console.log('Assessment started:', sessionId);
+            } catch (error) {
+                console.error('Error starting assessment:', error);
+                showError('Failed to start assessment. Please try again.');
+            }
+        }
+
+        // Load risk questions
+        async function loadRiskQuestions() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/get-risk-questions`);
+                const data = await response.json();
+                riskQuestions = data.questions;
+                renderRiskQuestions();
+            } catch (error) {
+                console.error('Error loading questions:', error);
+                showError('Failed to load questions. Please try again.');
+            }
+        }
+
+        // Render risk assessment questions
+        function renderRiskQuestions() {
+            const container = document.getElementById('riskQuestions');
+            container.innerHTML = '';
+
+            riskQuestions.forEach((question, index) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'question';
+                questionDiv.innerHTML = `
+                    <h3>Question ${index + 1}: ${question.question}</h3>
+                    <div class="options" data-question-id="${question.id}">
+                        ${question.options.map(option => `
+                            <div class="option" 
+                                 onclick="selectOption(${question.id}, '${option.value}', ${option.score})" 
+                                 data-value="${option.value}">
+                                ${option.text}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                container.appendChild(questionDiv);
+            });
+        }
+
+        // Select option for risk question
+        function selectOption(questionId, value, score) {
+            // Remove previous selection for this question
+            const optionsContainer = document.querySelector(`[data-question-id="${questionId}"]`);
+            optionsContainer.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+            
+            // Add selection to clicked option
+            event.target.classList.add('selected');
+            
+            // Update responses array
+            const existingIndex = riskResponses.findIndex(r => r.question_id === questionId);
+            const response = { question_id: questionId, selected_option: value, score: score };
+            
+            if (existingIndex >= 0) {
+                riskResponses[existingIndex] = response;
+            } else {
+                riskResponses.push(response);
+            }
+            
+            // Enable submit button if all questions answered
+            document.getElementById('submitBtn').disabled = riskResponses.length < riskQuestions.length;
+        }
+
+        // Navigate between steps
+        function nextStep() {
+            if (currentStep === 1) {
+                submitDemographics();
+            } else if (currentStep === 2) {
+                submitFinancialGoals();
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                showStep(currentStep);
+                updateProgress();
+            }
+        }
+
+        function showStep(step) {
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+            document.getElementById(`step${step}`).classList.add('active');
+            
+            if (step === 3 && riskQuestions.length === 0) {
+                loadRiskQuestions();
+            }
+        }
+
+        function updateProgress() {
+            const progress = (currentStep / 4) * 100;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+            document.getElementById('stepIndicator').textContent = `Step ${currentStep} of 4`;
+        }
+
+        // Submit demographics
+        async function submitDemographics() {
+            const form = document.getElementById('demographicsForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData);
+            
+            // Convert numeric fields with validation
+            try {
+                data.age = parseInt(data.age);
+                data.income = parseInt(data.income);
+                data.dependents = parseInt(data.dependents);
+                
+                // Validate ranges
+                if (data.age < 18 || data.age > 100) {
+                    showError('Age must be between 18 and 100');
+                    return;
+                }
+                if (data.income < 20000 || data.income > 50000000) {
+                    showError('Income must be between $20,000 and $50 million');
+                    return;
+                }
+                if (data.dependents < 0 || data.dependents > 20) {
+                    showError('Number of dependents must be between 0 and 20');
+                    return;
+                }
+                
+            } catch (error) {
+                showError('Please enter valid numbers for age, income, and dependents');
+                return;
+            }
+
+            try {
+                showLoading(true);
+                const response = await fetch(`${API_BASE_URL}/submit-demographics?session_id=${sessionId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    currentStep = 2;
+                    showStep(currentStep);
+                    updateProgress();
+                    showLoading(false);
+                } else {
+                    const error = await response.json();
+                    showError('Error: ' + error.detail);
+                    showLoading(false);
+                }
+            } catch (error) {
+                console.error('Error submitting demographics:', error);
+                showError('Error submitting demographics. Please try again.');
+                showLoading(false);
+            }
+        }
+
+        // Submit financial goals
+        async function submitFinancialGoals() {
+            const form = document.getElementById('financialGoalsForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData);
+            
+            // Convert numeric fields with validation
+            try {
+                data.target_amount = data.target_amount ? parseInt(data.target_amount) : null;
+                data.time_horizon = parseInt(data.time_horizon);
+                data.current_savings = parseInt(data.current_savings);
+                data.monthly_expenses = parseInt(data.monthly_expenses);
+                data.existing_debt = parseInt(data.existing_debt);
+                data.emergency_fund_months = parseInt(data.emergency_fund_months);
+                
+                // Validate extreme values
+                if (data.target_amount && (data.target_amount > 100000000 || data.target_amount < 0)) {
+                    showError('Target amount must be between $0 and $100 million');
+                    return;
+                }
+                if (data.current_savings > 50000000 || data.current_savings < 0) {
+                    showError('Current savings must be between $0 and $50 million');
+                    return;
+                }
+                if (data.monthly_expenses > 1000000 || data.monthly_expenses < 0) {
+                    showError('Monthly expenses must be between $0 and $1 million');
+                    return;
+                }
+                if (data.existing_debt > 50000000 || data.existing_debt < 0) {
+                    showError('Existing debt must be between $0 and $50 million');
+                    return;
+                }
+                
+                // Logical validation
+                if (data.monthly_expenses * 12 > data.current_savings + (data.target_amount || 0)) {
+                    if (!confirm('Your annual expenses exceed your savings and target amount. Continue anyway?')) {
+                        return;
+                    }
+                }
+                
+            } catch (error) {
+                showError('Please enter valid numbers for all financial fields');
+                return;
+            }
+
+            try {
+                showLoading(true);
+                const response = await fetch(`${API_BASE_URL}/submit-financial-goals?session_id=${sessionId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    currentStep = 3;
+                    showStep(currentStep);
+                    updateProgress();
+                    showLoading(false);
+                } else {
+                    const error = await response.json();
+                    showError('Error: ' + error.detail);
+                    showLoading(false);
+                }
+            } catch (error) {
+                console.error('Error submitting financial goals:', error);
+                showError('Error submitting financial goals. Please try again.');
+                showLoading(false);
+            }
+        }
+
+        // Submit complete assessment
+        async function submitAssessment() {
+            try {
+                showLoading(true);
+                
+                // Submit risk responses
+                const riskResponse = await fetch(`${API_BASE_URL}/submit-risk-assessment?session_id=${sessionId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(riskResponses)
+                });
+
+                if (!riskResponse.ok) {
+                    throw new Error('Failed to submit risk assessment');
+                }
+
+                // Generate recommendation
+                const recommendationResponse = await fetch(`${API_BASE_URL}/generate-recommendation?session_id=${sessionId}`, {
+                    method: 'POST'
+                });
+
+                if (recommendationResponse.ok) {
+                    const recommendation = await recommendationResponse.json();
+                    displayResults(recommendation);
+                    currentStep = 4;
+                    showStep(currentStep);
+                    updateProgress();
+                    showLoading(false);
+                } else {
+                    const error = await recommendationResponse.json();
+                    showError('Error generating recommendation: ' + error.detail);
+                    showLoading(false);
+                }
+            } catch (error) {
+                console.error('Error submitting assessment:', error);
+                showError('Error submitting assessment. Please try again.');
+                showLoading(false);
+            }
+        }
+
+        // Display results
+        function displayResults(recommendation) {
+            const resultsDiv = document.getElementById('results');
+            const allocation = recommendation.portfolio_recommendation.allocation;
+            
+            resultsDiv.innerHTML = `
+                <div class="result-section recommendation">
+                    <h3>Your Risk Profile: ${recommendation.assessment_summary.final_risk_category}</h3>
+                    <p>${recommendation.explanation}</p>
+                </div>
+
+                <div class="result-section portfolio">
+                    <h3>Recommended Portfolio Allocation</h3>
+                    <div class="allocation-bar">
+                        <div class="stocks" style="width: ${allocation.stocks}%" title="Stocks: ${allocation.stocks}%"></div>
+                        <div class="bonds" style="width: ${allocation.bonds}%" title="Bonds: ${allocation.bonds}%"></div>
+                        <div class="cash" style="width: ${allocation.cash}%" title="Cash: ${allocation.cash}%"></div>
+                    </div>
+                    <p>
+                        <span style="color: #28a745;">■ Stocks: ${allocation.stocks}%</span> | 
+                        <span style="color: #ffc107;">■ Bonds: ${allocation.bonds}%</span> | 
+                        <span style="color: #6c757d;">■ Cash: ${allocation.cash}%</span>
+                    </p>
+                </div>
+
+                <div class="result-section">
+                    <h3>Investment Projections</h3>
+                    <p><strong>Expected Annual Return:</strong> ${recommendation.projections.expected_annual_return}</p>
+                    <p><strong>Projected Portfolio Value:</strong> ${recommendation.projections.projected_portfolio_value}</p>
+                    <p><strong>Recommended Monthly Investment:</strong> ${recommendation.projections.monthly_contribution_needed}</p>
+                </div>
+
+                <div class="result-section">
+                    <h3>Next Steps</h3>
+                    <ol>
+                        ${recommendation.next_steps.map(step => `<li>${step}</li>`).join('')}
+                    </ol>
+                </div>
+
+                <div class="result-section" style="background: #fff3cd; border: 1px solid #ffeaa7;">
+                    <p><small>${recommendation.disclaimer}</small></p>
+                </div>
+            `;
+        }
+
+        // Utility functions
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        function showLoading(show) {
+            const loadingDiv = document.getElementById('loadingMessage');
+            loadingDiv.style.display = show ? 'block' : 'none';
+        }
+
+        // Start over
+        function startOver() {
+            currentStep = 1;
+            sessionId = null;
+            riskResponses = [];
+            showStep(currentStep);
+            updateProgress();
+            initAssessment();
+            
+            // Reset forms
+            document.getElementById('demographicsForm').reset();
+            document.getElementById('financialGoalsForm').reset();
+            document.getElementById('riskQuestions').innerHTML = '';
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('loadingMessage').style.display = 'none';
+        }
+
+        // Initialize on page load
+        window.onload = function() {
+            initAssessment();
+            updateProgress();
+            
+            // Add input validation listeners
+            addInputValidation();
+        };
+        
+        function addInputValidation() {
+            // Add real-time validation for numeric inputs
+            const numericInputs = document.querySelectorAll('input[type="number"]');
+            numericInputs.forEach(input => {
+                input.addEventListener('input', function(e) {
+                    const value = e.target.value;
+                    const max = e.target.max;
+                    
+                    // Check if value exceeds maximum
+                    if (max && parseInt(value) > parseInt(max)) {
+                        e.target.value = max;
+                        showError(`Maximum value for ${e.target.previousElementSibling.textContent} is ${parseInt(max).toLocaleString()}`);
+                    }
+                    
+                    // Prevent extremely long numbers
+                    if (value.length > 15) {
+                        e.target.value = value.substring(0, 15);
+                        showError('Number is too large. Please enter a reasonable value.');
+                    }
+                });
+                
+                // Prevent pasting extremely large numbers
+                input.addEventListener('paste', function(e) {
+                    setTimeout(() => {
+                        const value = e.target.value;
+                        const max = e.target.max;
+                        
+                        if (max && parseInt(value) > parseInt(max)) {
+                            e.target.value = '';
+                            showError(`Value exceeds maximum allowed: ${parseInt(max).toLocaleString()}`);
+                        }
+                        
+                        if (value.length > 15) {
+                            e.target.value = '';
+                            showError('Pasted number is too large. Please enter a reasonable value.');
+                        }
+                    }, 10);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
