@@ -226,7 +226,7 @@
         // Configuration for different environments
         const API_BASE_URL = window.location.hostname === 'localhost' 
             ? 'http://localhost:8000' 
-            : `${window.location.protocol}//${window.location.hostname.replace('robo-advisor-frontend', 'robo-advisor-api')}`; // Update this with your actual API URL
+            : `https://robo-advisor-api-cyu1.onrender.com`; //Actual API URL
             
         let currentStep = 1;
         let sessionId = null;
@@ -645,4 +645,5 @@
         }
     </script>
 </body>
+
 </html>
