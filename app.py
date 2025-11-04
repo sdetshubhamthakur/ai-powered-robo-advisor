@@ -1,11 +1,5 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-try:
-    import shap
-    SHAP_AVAILABLE = True
-except ImportError:
-    SHAP_AVAILABLE = False
-    print("Warning: SHAP not available. Explanations will be simplified.")
 import uvicorn
 import numpy as np
 import pandas as pd
@@ -34,25 +28,13 @@ app.add_middleware(
 try:
     model = joblib.load("model.joblib")
     print("✅ Model loaded successfully")
-except (FileNotFoundError, ModuleNotFoundError) as e:
-    print(f"⚠️ Model loading failed: {e}")
-    print("🔄 Training new model...")
-    import subprocess
-    subprocess.run(["python", "train-script.py"], check=True)
-    model = joblib.load("model.joblib")
-    print("✅ New model trained and loaded")
-
-# Initialize SHAP explainer
-try:
-    if SHAP_AVAILABLE:
-        explainer = shap.TreeExplainer(model)
-        print("✅ SHAP explainer initialized")
-    else:
-        explainer = None
-        print("⚠️ SHAP not available, using simplified explanations")
 except Exception as e:
-    print(f"⚠️ SHAP initialization failed: {e}")
-    explainer = None
+    print(f"❌ Failed to load model: {e}")
+    raise HTTPException(status_code=500, detail="Model loading failed")
+
+# Simplified explainer (no SHAP for production stability)
+explainer = None
+print("ℹ️ Using simplified explanations (SHAP disabled for production)")
 
 # In-memory storage for demo (use database in production)
 assessment_sessions = {}
@@ -151,26 +133,10 @@ def explain_risk_level(data: ClientData):
         prediction = model.predict(input_df)[0]
         prediction = int(prediction)  # Ensure it's a scalar
         
-        # Generate SHAP values
-        shap_values = explainer.shap_values(input_df)
-        
-        # Handle multi-class SHAP values
-        if isinstance(shap_values, list):
-            # For multi-class, get SHAP values for predicted class
-            predicted_class_idx = prediction - 1  # Assuming classes 1-5, convert to 0-4
-            if predicted_class_idx < 0 or predicted_class_idx >= len(shap_values):
-                predicted_class_idx = 0  # Default to first class if index is out of bounds
-            shap_vals = shap_values[predicted_class_idx][0]
-        else:
-            shap_vals = shap_values[0]
-        
-        # Ensure shap_vals is a 1D array
-        if len(shap_vals.shape) > 1:
-            shap_vals = shap_vals.flatten()
-        
-        # Create feature importance dictionary
+        # Use simplified feature importance (Random Forest built-in)
+        feature_importance_raw = model.feature_importances_
         feature_names = input_df.columns.tolist()
-        feature_importance = dict(zip(feature_names, shap_vals.tolist()))
+        feature_importance = dict(zip(feature_names, feature_importance_raw.tolist()))
         
         # Generate user-friendly explanation
         risk_levels = {
@@ -423,21 +389,10 @@ def generate_recommendation(session_id: str):
     input_df = pd.DataFrame([ml_input])
     ml_prediction = model.predict(input_df)[0]
     
-    # Generate SHAP explanation
-    shap_values = explainer.shap_values(input_df)
-    if isinstance(shap_values, list):
-        predicted_class_idx = int(ml_prediction) - 1
-        if predicted_class_idx < 0 or predicted_class_idx >= len(shap_values):
-            predicted_class_idx = 0
-        shap_vals = shap_values[predicted_class_idx][0]
-    else:
-        shap_vals = shap_values[0]
-    
-    if len(shap_vals.shape) > 1:
-        shap_vals = shap_vals.flatten()
-    
+    # Use simplified feature importance
+    feature_importance_raw = model.feature_importances_
     feature_names = input_df.columns.tolist()
-    feature_importance = dict(zip(feature_names, shap_vals.tolist()))
+    feature_importance = dict(zip(feature_names, feature_importance_raw.tolist()))
     
     # Generate portfolio allocation
     portfolio_allocation = generate_portfolio_allocation(int(ml_prediction), session)
